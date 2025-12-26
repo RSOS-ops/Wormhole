@@ -1,4 +1,6 @@
 # Wormhole Console 🌌
+Wormhole Sunshine and Tailscale Utility
+
 Wormhole Console is a cinematic, sci-fi themed controller for managing remote access services on Windows. It provides a centralized, audio-reactive interface to toggle Tailscale VPN and Sunshine Streamer with a single click.
 
 🚀 Overview
