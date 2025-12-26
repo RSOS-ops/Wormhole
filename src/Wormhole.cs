@@ -5,6 +5,7 @@ using System.Drawing.Text;
 using System.Windows.Forms;
 using System.Diagnostics;
 using System.IO;
+using System.Linq;
 using System.Threading.Tasks;
 using System.ServiceProcess; 
 using System.Runtime.InteropServices; 
@@ -55,20 +56,25 @@ namespace WormholeConsole
 
         // FONT MANAGEMENT
         private PrivateFontCollection pfc = new PrivateFontCollection();
-        private FontFamily moonerFont;
+        private FontFamily fontRosnoc; 
+        private FontFamily fontEurostile;
 
         public WormholeForm()
         {
             // 1. PATH SETUP
             string assetsDir = Path.Combine(baseDir, "assets"); 
-            string fontPath = Path.Combine(assetsDir, "fonts", "mooner-rounded.otf"); 
+            
+            // Paths for Fonts
+            string fontPathRosnoc = Path.Combine(assetsDir, "fonts", "Rosnoc.otf");
+            string fontPathEurostile = Path.Combine(assetsDir, "fonts", "eurostile.TTF");
+            
             string htmlPath = Path.Combine(assetsDir, "wormhole.html");
             string iconPath = Path.Combine(assetsDir, "wormhole.ico");
             pythonScript = Path.Combine(baseDir, "src", "vst_engine.py");
             string cacheDir = Path.Combine(baseDir, "WebView2Cache");
 
-            // 2. LOAD CUSTOM FONT
-            LoadCustomFont(fontPath);
+            // 2. LOAD CUSTOM FONTS
+            LoadFonts(fontPathRosnoc, fontPathEurostile);
 
             // 3. FORM SETUP
             this.Text = "Wormhole Console";
@@ -102,8 +108,22 @@ namespace WormholeConsole
             this.Controls.Add(topPanel);
             this.Controls.Add(gripPanel);
 
-            // --- TITLE BAR BUTTONS ---
-            // Minimize
+            // --- TITLE BAR CONTENT ---
+            
+            // App Title (Added Step)
+            Label lblTitle = new Label();
+            lblTitle.Text = "WORMHOLE CONSOLE";
+            lblTitle.AutoSize = true;
+            lblTitle.ForeColor = micaText;
+            lblTitle.Location = new Point(12, 5); // Positioning
+            
+            // Assign Rosnoc to Title
+            if (fontRosnoc != null) lblTitle.Font = new Font(fontRosnoc, 12F, FontStyle.Regular);
+            else lblTitle.Font = new Font("Segoe UI", 10F, FontStyle.Bold);
+            
+            gripPanel.Controls.Add(lblTitle);
+
+            // Minimize Button
             Button btnMin = new Button();
             btnMin.Size = new Size(45, 30);
             btnMin.Dock = DockStyle.Right;
@@ -123,7 +143,7 @@ namespace WormholeConsole
             };
             gripPanel.Controls.Add(btnMin);
 
-            // Close
+            // Close Button
             Button btnClose = new Button();
             btnClose.Size = new Size(45, 30);
             btnClose.Dock = DockStyle.Right; 
@@ -176,6 +196,7 @@ namespace WormholeConsole
             }
 
             // 8. NEUMORPHIC UI BUTTONS
+            // Use Eurostile for Main App Buttons
             CreateNeuButton(botPanel, "OPEN WORMHOLE", 50, (s, e) => RunSequence(true));
             CreateNeuButton(botPanel, "COLLAPSE WORMHOLE", 130, (s, e) => RunSequence(false));
             btnMute = CreateNeuButton(botPanel, "MUTE SFX", 210, (s, e) => ToggleMute());
@@ -187,7 +208,9 @@ namespace WormholeConsole
             lblAbout.BackColor = Color.Transparent;
             lblAbout.AutoSize = true;
             lblAbout.Cursor = Cursors.Hand;
-            if (moonerFont != null) lblAbout.Font = new Font(moonerFont, 10, FontStyle.Regular);
+            
+            // About Link uses Eurostile
+            if (fontEurostile != null) lblAbout.Font = new Font(fontEurostile, 10, FontStyle.Regular);
             else lblAbout.Font = new Font("Segoe UI", 9, FontStyle.Regular);
             
             lblAbout.Location = new Point(botPanel.Width - 70, botPanel.Height - 30);
@@ -197,7 +220,8 @@ namespace WormholeConsole
             lblAbout.MouseLeave += (s, e) => lblAbout.ForeColor = aboutLinkColor; 
             
             lblAbout.Click += (s, e) => {
-                using (var about = new AboutPopup(moonerFont)) {
+                // Pass both fonts to the popup
+                using (var about = new AboutPopup(fontRosnoc, fontEurostile)) {
                     about.ShowDialog(this);
                 }
             };
@@ -206,36 +230,51 @@ namespace WormholeConsole
             // 10. DRAG LOGIC
             AddNativeDrag(this);
             AddNativeDrag(gripPanel);
+            AddNativeDrag(lblTitle); // Allow dragging by clicking the text
             AddNativeDrag(topPanel);
             AddNativeDrag(botPanel);
         }
 
         // --- CUSTOM FONT LOADER ---
-        private void LoadCustomFont(string path)
+        private void LoadFonts(string rosnocPath, string eurostilePath)
         {
-            if (File.Exists(path))
+            // Load Rosnoc
+            if (File.Exists(rosnocPath)) {
+                try { pfc.AddFontFile(rosnocPath); } catch {}
+            }
+            // Load Eurostile
+            if (File.Exists(eurostilePath)) {
+                try { pfc.AddFontFile(eurostilePath); } catch {}
+            }
+
+            // Assign families by finding them in the collection
+            if (pfc.Families.Length > 0)
             {
-                try 
+                foreach (var f in pfc.Families)
                 {
-                    pfc.AddFontFile(path);
-                    moonerFont = pfc.Families[0];
+                    if (f.Name.ToLower().Contains("rosnoc")) fontRosnoc = f;
+                    if (f.Name.ToLower().Contains("eurostile")) fontEurostile = f;
                 }
-                catch (Exception ex) { 
-                    Debug.WriteLine("Font Load Error: " + ex.Message);
-                    moonerFont = new FontFamily("Segoe UI"); 
-                }
+                
+                // Fallbacks if names don't match exactly but files loaded
+                if (fontRosnoc == null && pfc.Families.Length > 0) fontRosnoc = pfc.Families[0];
+                if (fontEurostile == null && pfc.Families.Length > 1) fontEurostile = pfc.Families[1];
+                else if (fontEurostile == null && pfc.Families.Length > 0) fontEurostile = pfc.Families[0];
             }
-            else
-            {
-                moonerFont = new FontFamily("Segoe UI");
-            }
+            
+            // Final fallback to system font
+            if (fontRosnoc == null) fontRosnoc = new FontFamily("Segoe UI");
+            if (fontEurostile == null) fontEurostile = new FontFamily("Segoe UI");
         }
 
         private NeuButton CreateNeuButton(Panel p, string text, int y, EventHandler action)
         {
             NeuButton btn = new NeuButton();
             btn.Text = text;
-            if (moonerFont != null) btn.CustomFontFamily = moonerFont; 
+            
+            // Assign Eurostile to buttons
+            if (fontEurostile != null) btn.CustomFontFamily = fontEurostile; 
+            
             btn.Location = new Point(100, y);
             btn.Size = new Size(300, 60);
             btn.Click += action;
@@ -276,8 +315,14 @@ namespace WormholeConsole
         [DllImport("user32.dll")]
         public static extern bool ReleaseCapture();
 
-        public AboutPopup(FontFamily customFont)
+        private FontFamily fontRosnoc;
+        private FontFamily fontEurostile;
+
+        public AboutPopup(FontFamily rosnoc, FontFamily eurostile)
         {
+            this.fontRosnoc = rosnoc;
+            this.fontEurostile = eurostile;
+
             this.Size = new Size(400, 500);
             this.FormBorderStyle = FormBorderStyle.None;
             this.StartPosition = FormStartPosition.CenterParent;
@@ -298,25 +343,30 @@ namespace WormholeConsole
             btnClose.MouseLeave += (s, e) => btnClose.ForeColor = Color.Gray;
             this.Controls.Add(btnClose);
 
-            // Title
+            // Title (Using Rosnoc)
             Label lblTitle = new Label { Text = "ABOUT WORMHOLE", AutoSize = false, Width = 400, TextAlign = ContentAlignment.MiddleCenter, Height = 40, ForeColor = Color.Cyan, Location = new Point(0, 20) };
-            if (customFont != null) lblTitle.Font = new Font(customFont, 16);
+            if (fontRosnoc != null) lblTitle.Font = new Font(fontRosnoc, 16);
+            else lblTitle.Font = new Font("Segoe UI", 16);
             this.Controls.Add(lblTitle);
 
-            // Copyright
+            // Copyright (Using Eurostile)
             string copyText = "Chip Johnson\n Los Angeles, CA\n 2025\nThe Royal Society of Summoners";
-            Label lblCopy = new Label { Text = copyText, AutoSize = false, Width = 380, Height = 50, TextAlign = ContentAlignment.TopCenter, ForeColor = Color.FromArgb(200, 200, 200), Location = new Point(10, 70), Font = new Font("Segoe UI", 9) };
+            Label lblCopy = new Label { Text = copyText, AutoSize = false, Width = 380, Height = 50, TextAlign = ContentAlignment.TopCenter, ForeColor = Color.FromArgb(200, 200, 200), Location = new Point(10, 70) };
+            if (fontEurostile != null) lblCopy.Font = new Font(fontEurostile, 9);
+            else lblCopy.Font = new Font("Segoe UI", 9);
             this.Controls.Add(lblCopy);
 
             // Divider
             Label div1 = new Label { AutoSize = false, Height = 1, Width = 300, BackColor = Color.FromArgb(60,60,60), Location = new Point(50, 130) };
             this.Controls.Add(div1);
 
-            // Donation Text
-            Label lblDonate = new Label { Text = "If you're finding this tool useful,\nconsider buying me a coffee!", AutoSize = false, Width = 380, Height = 40, TextAlign = ContentAlignment.MiddleCenter, ForeColor = Color.White, Location = new Point(10, 145), Font = new Font("Segoe UI", 10, FontStyle.Italic) };
+            // Donation Text (Using Eurostile)
+            Label lblDonate = new Label { Text = "If you're finding this tool useful,\nconsider buying me a coffee!", AutoSize = false, Width = 380, Height = 40, TextAlign = ContentAlignment.MiddleCenter, ForeColor = Color.White, Location = new Point(10, 145) };
+            if (fontEurostile != null) lblDonate.Font = new Font(fontEurostile, 10, FontStyle.Italic);
+            else lblDonate.Font = new Font("Segoe UI", 10, FontStyle.Italic);
             this.Controls.Add(lblDonate);
 
-            // Links (Cashapp, Venmo, Paypal)
+            // Links (Using Eurostile)
             AddLink("Cashapp ($tmjiii)", "https://cash.me/$tmjiii", 195);
             AddLink("Venmo (@tmjiii)", "https://venmo.com/@tmjiii", 225);
             AddLink("PayPal (tmjiii)", "https://paypal.me/tmjiii", 255);
@@ -325,10 +375,11 @@ namespace WormholeConsole
             Label div2 = new Label { AutoSize = false, Height = 1, Width = 300, BackColor = Color.FromArgb(60,60,60), Location = new Point(50, 295) };
             this.Controls.Add(div2);
 
-            // Crypto Header (Red + Larger)
+            // Crypto Header (Using Eurostile)
             Label lblCrypto = new Label { Text = "OR - If you're on the right side of the new world order:", AutoSize = false, Width = 380, Height = 20, TextAlign = ContentAlignment.MiddleCenter, Location = new Point(10, 310) };
             lblCrypto.ForeColor = ColorTranslator.FromHtml("#f50a1c"); 
-            lblCrypto.Font = new Font("Segoe UI", 10, FontStyle.Bold); 
+            if (fontEurostile != null) lblCrypto.Font = new Font(fontEurostile, 10, FontStyle.Bold);
+            else lblCrypto.Font = new Font("Segoe UI", 10, FontStyle.Bold);
             this.Controls.Add(lblCrypto);
 
             // Crypto Addresses
@@ -370,7 +421,11 @@ namespace WormholeConsole
             ll.Location = new Point(0, y);
             ll.LinkColor = Color.FromArgb(100, 200, 255);
             ll.ActiveLinkColor = Color.White;
-            ll.Font = new Font("Segoe UI", 11);
+            
+            // Link text uses Eurostile
+            if (fontEurostile != null) ll.Font = new Font(fontEurostile, 11);
+            else ll.Font = new Font("Segoe UI", 11);
+            
             ll.LinkClicked += (s, e) => {
                 try { Process.Start(new ProcessStartInfo { FileName = url, UseShellExecute = true }); } catch {}
             };
@@ -379,8 +434,10 @@ namespace WormholeConsole
 
         private void AddCryptoBox(string coin, string addr, int y)
         {
-            // Increased Font to 10 for the Label (ETH/BTC)
-            Label lbl = new Label { Text = coin + ":", ForeColor = Color.Gray, AutoSize = true, Location = new Point(20, y), Font = new Font("Segoe UI", 10, FontStyle.Bold) };
+            // Coin Label (Eurostile)
+            Label lbl = new Label { Text = coin + ":", ForeColor = Color.Gray, AutoSize = true, Location = new Point(20, y) };
+            if (fontEurostile != null) lbl.Font = new Font(fontEurostile, 10, FontStyle.Bold);
+            else lbl.Font = new Font("Segoe UI", 10, FontStyle.Bold);
             this.Controls.Add(lbl);
 
             TextBox tb = new TextBox();
@@ -389,12 +446,9 @@ namespace WormholeConsole
             tb.BorderStyle = BorderStyle.None;
             tb.BackColor = Color.FromArgb(40, 44, 50); 
             tb.ForeColor = Color.FromArgb(200, 200, 200);
-            
-            // Increased Width to 360 to accommodate larger text
             tb.Width = 360; 
             tb.Location = new Point(20, y + 20);
-            
-            // Increased Font to 11 for the Address
+            // Addresses stay in Consolas for readability
             tb.Font = new Font("Consolas", 11); 
             this.Controls.Add(tb);
         }
@@ -406,7 +460,7 @@ namespace WormholeConsole
         private bool isPressed = false;
         private int borderRadius = 20;
         private int shadowOffset = 4;
-        private int textYOffset = 6; // 6px offset for Mooner font
+        private int textYOffset = 0; 
         private Color baseColor = ColorTranslator.FromHtml("#2e3238"); 
         private Color textColor = ColorTranslator.FromHtml("#e0e5ec");
         public FontFamily CustomFontFamily { get; set; }
