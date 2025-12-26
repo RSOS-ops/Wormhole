@@ -1,0 +1,23 @@
+# --- IGNORE BUILD ARTIFACTS ---
+# Ignore all executables and DLLs by default (keeps root clean)
+*.exe
+*.dll
+*.pdb
+*.cache
+*.suo
+*.user
+
+# --- IGNORE FOLDERS ---
+# Temporary folders created by Visual Studio or the App
+bin/
+obj/
+WebView2Cache/
+python/
+Wormhole_Dist/
+.vs/
+assets/webview2_temp/
+
+# --- EXCEPTIONS (ALLOW THESE) ---
+# We MUST allow the DLLs inside assets, as they are required for building
+!assets/*.dll
+!assets/*.zip

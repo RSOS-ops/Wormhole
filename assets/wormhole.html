@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html>
+<head>
+<style>
+    /* --- RESET --- */
+    html, body {
+      width: 100%; height: 100%; overflow: hidden; margin: 0;
+      background: #000; text-align: center; font-family: 'Segoe UI', sans-serif;
+    }
+    
+    /* --- SCENE CONTAINER --- */
+    .scene {
+      position: relative; display: inline-block;
+      perspective: 15px; perspective-origin: 50% 50%;
+      top: 50%; transform: translateY(-50%);
+      transition: transform 2.5s cubic-bezier(0.65, 0.05, 0.36, 1), opacity 2.5s ease;
+    }
+
+    .scene.closing {
+      transform: translateY(-50%) scale(0) rotate(720deg);
+      opacity: 0;
+    }
+
+    /* --- HUD OVERLAY --- */
+    #hud {
+      position: absolute;
+      top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      font-size: 24px;
+      font-weight: bold;
+      letter-spacing: 4px;
+      text-transform: uppercase;
+      color: white;
+      text-shadow: 0 0 10px cyan;
+      
+      /* UPDATED: Default to Visible */
+      opacity: 1; 
+      transition: opacity 0.5s ease;
+      z-index: 100;
+      pointer-events: none;
+    }
+
+    /* --- TUNNEL SEGMENTS --- */
+    .wrap {
+      position: absolute; width: 1000px; height: 1000px;
+      left: -500px; top: -500px;
+      transform-style: preserve-3d;
+      animation: move 12s infinite linear; 
+      animation-fill-mode: forwards;
+    }
+    .wrap:nth-child(2) { animation-delay: -6s; }
+
+    /* --- WALL TEXTURES --- */
+    .wall {
+      width: 100%; height: 100%; position: absolute;
+      background: url(https://s3-us-west-2.amazonaws.com/s.cdpn.io/18515/PIA09959-1280x800_copy.jpg);
+      background-size: cover; opacity: 0;
+      animation: fade 12s infinite linear;
+    }
+    .wrap:nth-child(2) .wall { animation-delay: -6s; }
+
+    /* --- POSITIONS --- */
+    .wall-right { transform: rotateY(90deg) translateZ(500px); }
+    .wall-left { transform: rotateY(-90deg) translateZ(500px); }
+    .wall-top { transform: rotateX(90deg) translateZ(500px); }
+    .wall-bottom { transform: rotateX(-90deg) translateZ(500px); }
+    .wall-back { transform: rotateX(180deg) translateZ(500px); }
+
+    @keyframes fade { 0%{opacity:0} 25%{opacity:1} 75%{opacity:1} 100%{opacity:0} }
+    @keyframes move { 0%{transform: translateZ(-500px) rotate(0deg);} 100%{transform: translateZ(500px) rotate(0deg);} }
+</style>
+</head>
+<body>
+    <div id="hud" style="text-shadow: 0 0 15px crimson;">SYSTEMS OFFLINE</div>
+
+    <div class="scene" id="wormhole">
+        <div class="wrap"><div class="wall wall-right"></div><div class="wall wall-left"></div><div class="wall wall-top"></div><div class="wall wall-bottom"></div><div class="wall wall-back"></div></div>
+        <div class="wrap"><div class="wall wall-right"></div><div class="wall wall-left"></div><div class="wall wall-top"></div><div class="wall wall-bottom"></div><div class="wall wall-back"></div></div>
+    </div>
+
+    <script>
+        // --- SPEED CONTROL ENGINE ---
+        let currentSpeed = 0.0; 
+        let targetSpeed = 0.0;  
+        
+        function animateEngine() {
+            currentSpeed += (targetSpeed - currentSpeed) * 0.03; 
+            if (Math.abs(currentSpeed) < 0.001) currentSpeed = 0;
+            document.getAnimations().forEach(anim => {
+                anim.playbackRate = Math.max(0, currentSpeed);
+            });
+            requestAnimationFrame(animateEngine);
+        }
+        animateEngine();
+
+
+        // --- C# INTERFACE ---
+        function setWormholeState(isOpen) {
+            const scene = document.getElementById('wormhole');
+            if (isOpen) {
+                scene.classList.remove('closing');
+                targetSpeed = 8.0; 
+            } else {
+                scene.classList.add('closing');
+                targetSpeed = 0.0; 
+            }
+        }
+
+        let hudTimeout;
+        function updateHud(text, color, persist) {
+            const hud = document.getElementById('hud');
+            clearTimeout(hudTimeout);
+            
+            hud.innerText = text;
+            hud.style.textShadow = "0 0 15px " + color;
+            hud.style.opacity = 1;
+            
+            if (!persist) {
+                hudTimeout = setTimeout(() => { hud.style.opacity = 0; }, 3000);
+            }
+        }
+    </script>
+</body>
+</html>
