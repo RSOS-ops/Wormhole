@@ -5,19 +5,21 @@ Wormhole Console is a cinematic, sci-fi themed controller for managing remote ac
 
 Instead of digging through service menus or system trays, Wormhole turns network management into a tactile experience.
 
-**
+***
 
 If you're finding this tool useful, consider buying me a coffee!
-[Buy me a coffee](https://cash.me/$tmjiii)
-Or via Venmo: [Venmo](https://venmo.com/@tmjiii)
-or via PayPal: [PayPal](https://paypal.me/tmjiii)
+Cashapp: (https://cash.me/$tmjiii)
+Or via Venmo: [Venmo](https://venmo.com/tmjiii)
+or via PayPal: [PayPal](https://paypal.me/chipjohnson)
+
 ---- OR - If you're on the right side of the new world order ---
+
 ETH: 0xA6921320f87Ba53f40570edfbc8584b11F43613D
 BTC: bc1q3f6kfh7nmyuh4wwl09a7sseha2avqjngprp3h8
 
-Much love! ❤️💖💕💓💜💝
+Much love! ❤️💖💕💓💜💝  OPS at The Royal Society of Summoners
 
-
+***
 
 🚀 Key Features
 One-Click Control: Starts/Stops Tailscale and Sunshine in sequence with visual feedback.
