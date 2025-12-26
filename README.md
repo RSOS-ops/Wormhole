@@ -8,7 +8,7 @@ Instead of digging through service menus or system trays, Wormhole turns network
 ***
   
 If you're finding this tool useful, consider buying me a coffee!  
-Cashapp: [https://cash.me/$tmjiii](https://cash.me/$tmjiii)  
+Via Cashapp: [Cashapp](https://cash.me/$tmjiii)  
 Or via Venmo: [Venmo](https://venmo.com/tmjiii)  
 or via PayPal: [PayPal](https://paypal.me/chipjohnson)  
 
