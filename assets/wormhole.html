@@ -2,10 +2,18 @@
 <html>
 <head>
 <style>
+    /* --- CUSTOM FONT LOADER --- */
+    @font-face {
+        font-family: 'MoonerOutline';
+        src: url('fonts/mooner-roundedoutline.otf') format('opentype');
+    }
+
     /* --- RESET --- */
     html, body {
       width: 100%; height: 100%; overflow: hidden; margin: 0;
-      background: #000; text-align: center; font-family: 'Segoe UI', sans-serif;
+      background: #2e3238; 
+      text-align: center; 
+      font-family: 'Segoe UI', sans-serif;
     }
     
     /* --- SCENE CONTAINER --- */
@@ -16,6 +24,7 @@
       transition: transform 2.5s cubic-bezier(0.65, 0.05, 0.36, 1), opacity 2.5s ease;
     }
 
+    /* DEFAULT STATE: This class hides the wormhole */
     .scene.closing {
       transform: translateY(-50%) scale(0) rotate(720deg);
       opacity: 0;
@@ -26,18 +35,24 @@
       position: absolute;
       top: 50%; left: 50%;
       transform: translate(-50%, -50%);
-      font-size: 24px;
-      font-weight: bold;
+      
+      /* FONT SETTINGS */
+      font-family: 'MoonerOutline', sans-serif !important;
+      font-size: 36px;
       letter-spacing: 4px;
+      line-height: 1.4; 
       text-transform: uppercase;
+      
       color: white;
       text-shadow: 0 0 10px cyan;
       
-      /* UPDATED: Default to Visible */
+      /* VISIBILITY */
       opacity: 1; 
       transition: opacity 0.5s ease;
       z-index: 100;
       pointer-events: none;
+      
+      white-space: pre-line; 
     }
 
     /* --- TUNNEL SEGMENTS --- */
@@ -49,8 +64,6 @@
       animation-fill-mode: forwards;
     }
     .wrap:nth-child(2) { animation-delay: -6s; }
-
-    /* --- WALL TEXTURES --- */
     .wall {
       width: 100%; height: 100%; position: absolute;
       background: url(https://s3-us-west-2.amazonaws.com/s.cdpn.io/18515/PIA09959-1280x800_copy.jpg);
@@ -58,8 +71,6 @@
       animation: fade 12s infinite linear;
     }
     .wrap:nth-child(2) .wall { animation-delay: -6s; }
-
-    /* --- POSITIONS --- */
     .wall-right { transform: rotateY(90deg) translateZ(500px); }
     .wall-left { transform: rotateY(-90deg) translateZ(500px); }
     .wall-top { transform: rotateX(90deg) translateZ(500px); }
@@ -73,13 +84,12 @@
 <body>
     <div id="hud" style="text-shadow: 0 0 15px crimson;">SYSTEMS OFFLINE</div>
 
-    <div class="scene" id="wormhole">
+    <div class="scene closing" id="wormhole">
         <div class="wrap"><div class="wall wall-right"></div><div class="wall wall-left"></div><div class="wall wall-top"></div><div class="wall wall-bottom"></div><div class="wall wall-back"></div></div>
         <div class="wrap"><div class="wall wall-right"></div><div class="wall wall-left"></div><div class="wall wall-top"></div><div class="wall wall-bottom"></div><div class="wall wall-back"></div></div>
     </div>
 
     <script>
-        // --- SPEED CONTROL ENGINE ---
         let currentSpeed = 0.0; 
         let targetSpeed = 0.0;  
         
@@ -93,8 +103,6 @@
         }
         animateEngine();
 
-
-        // --- C# INTERFACE ---
         function setWormholeState(isOpen) {
             const scene = document.getElementById('wormhole');
             if (isOpen) {
@@ -111,7 +119,10 @@
             const hud = document.getElementById('hud');
             clearTimeout(hudTimeout);
             
-            hud.innerText = text;
+            // AUTOMATIC LINE SPLIT: Replaces spaces with newlines
+            let stackText = text.replace(/ /g, '\n');
+            
+            hud.innerText = stackText;
             hud.style.textShadow = "0 0 15px " + color;
             hud.style.opacity = 1;
             
